@@ -380,7 +380,13 @@ def place_in_line(item_id: str = None, customer_id: str = None) -> int:
     """
     Returns the customer's place_in_line, or -1 if not on waitlist.
     """
-    raise NotImplementedError("you must implement this function")
+
+    cur.execute("SELECT place_in_line FROM waitlist WHERE item_id = %s AND customer_id = %s;", (item_id, customer_id))
+
+    try:
+        return int([row for row in cur][0][0])
+    except IndexError:
+        return -1
 
 
 def line_length(item_id: str = None) -> int:
