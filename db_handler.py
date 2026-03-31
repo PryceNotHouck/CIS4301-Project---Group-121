@@ -6,6 +6,7 @@ from models.Item import Item
 from models.Rental import Rental
 from models.Customer import Customer
 from datetime import date, timedelta
+import helper_functions
 
 
 conn = connect(user=DB_CONFIG["username"], password=DB_CONFIG["password"], host=DB_CONFIG["host"],
@@ -362,7 +363,17 @@ def number_in_stock(item_id: str = None) -> int:
     """
     Returns num_owned - active rentals. Returns -1 if item doesn't exist.
     """
-    raise NotImplementedError("you must implement this function")
+
+    if not helper_functions.check_if_item_exists(item_id):
+        return -1
+
+    cur.execute("SELECT i_num_owned FROM item WHERE i_item_id = %s;", (item_id,))
+    num_owned = int([row for row in cur][0][0])
+
+    cur.execute("SELECT * FROM rental WHERE item_id = %s", (item_id,))
+    num_rented = len([row for row in cur])
+
+    return num_owned - num_rented
 
 
 def place_in_line(item_id: str = None, customer_id: str = None) -> int:
