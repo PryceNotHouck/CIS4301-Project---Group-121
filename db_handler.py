@@ -29,20 +29,23 @@ def add_item(new_item: Item = None):
     start_date = f"{new_item.start_year}-01-01"
     item_class = "New Item"
 
-    query = fr"""
-    INSERT INTO item (
-    {item_sk},
-    {new_item.item_id},
-    {start_date},
-    {new_item.product_name},
-    {new_item.brand},
-    {item_class},
-    {new_item.category},
-    {new_item.manufact},
-    {new_item.current_price},
-    {new_item.num_owned}
-    );
-    """
+    cur.execute(
+        """
+        INSERT INTO item
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s);
+        """, (
+            item_sk,
+            new_item.item_id,
+            start_date,
+            new_item.product_name,
+            new_item.brand,
+            item_class,
+            new_item.category,
+            new_item.manufact,
+            new_item.current_price,
+            new_item.num_owned,
+        )
+    )
 
 
 
@@ -51,7 +54,64 @@ def add_customer(new_customer: Customer = None):
     new_customer - A Customer object containing a new customer to be inserted into the DB in the customer table.
         new_customer and its attributes will never be None.
     """
-    raise NotImplementedError("you must implement this function")
+
+    sk_query = r"SELECT MAX(ca_address_sk) FROM customer_address;"
+    cur.execute(sk_query)
+    ca_sk = int([row for row in cur][0][0]) + 1
+    address = new_customer.address
+
+    segment = address.find(' ')
+    street_number = address[:segment]
+    address = address[segment:]
+
+    segment = address.find(',')
+    street_name = address[:segment]
+    address = address[segment + 1:]
+
+    segment = address.find(',')
+    city = address[:segment]
+    address = address[segment + 1:]
+
+    segment = address.find(' ')
+    state = address[:segment]
+    address = address[segment:]
+    zip = address
+
+    cur.execute(
+        """
+        INSERT INTO customer_address
+        VALUES (%s, %s, %s, %s, %s, %s);
+        """, (
+            ca_sk,
+            street_number,
+            street_name,
+            city,
+            state,
+            zip
+        )
+    )
+
+    sk_query = r"SELECT MAX(c_customer_sk) FROM customer;"
+    cur.execute(sk_query)
+    c_sk = int([row for row in cur][0][0]) + 1
+
+    name_space = new_customer.name.find(' ')
+    first = new_customer.name[:name_space]
+    last = new_customer.name[name_space:]
+
+    cur.execute(
+        """
+        INSERT INTO customer
+        VALUES (%s, %s, %s, %s, %s, %s);
+        """, (
+            c_sk,
+            new_customer.customer_id,
+            first,
+            last,
+            new_customer.email,
+            ca_sk
+        )
+    )
 
 
 def edit_customer(original_customer_id: str = None, new_customer: Customer = None):
