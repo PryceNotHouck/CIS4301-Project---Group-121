@@ -20,7 +20,30 @@ def add_item(new_item: Item = None):
     new_item - An Item object containing a new item to be inserted into the DB in the item table.
         new_item and its attributes will never be None.
     """
-    raise NotImplementedError("you must implement this function")
+
+    sk_query = r"SELECT MAX(i_item_sk) FROM item;"
+    cur.execute(sk_query)
+    max_sk = [row for row in cur]
+
+    item_sk = int(max_sk[0][0]) + 1
+    start_date = f"{new_item.start_year}-01-01"
+    item_class = "New Item"
+
+    query = fr"""
+    INSERT INTO item (
+    {item_sk},
+    {new_item.item_id},
+    {start_date},
+    {new_item.product_name},
+    {new_item.brand},
+    {item_class},
+    {new_item.category},
+    {new_item.manufact},
+    {new_item.current_price},
+    {new_item.num_owned}
+    );
+    """
+
 
 
 def add_customer(new_customer: Customer = None):
