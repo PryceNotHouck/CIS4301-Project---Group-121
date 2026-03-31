@@ -393,7 +393,13 @@ def line_length(item_id: str = None) -> int:
     """
     Returns how many people are on the waitlist for this item.
     """
-    raise NotImplementedError("you must implement this function")
+
+    cur.execute("SELECT MAX(place_in_line) FROM waitlist WHERE item_id = %s;", (item_id,))
+
+    try:
+        return int([row for row in cur][0][0])
+    except TypeError:
+        return 0
 
 
 def save_changes():
