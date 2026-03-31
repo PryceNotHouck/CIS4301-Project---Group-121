@@ -228,7 +228,32 @@ def return_item(item_id: str = None, customer_id: str = None):
     """
     Moves a rental from rental to rental_history with return_date = today.
     """
-    raise NotImplementedError("you must implement this function")
+
+    cur.execute("SELECT * FROM rental WHERE item_id = %s AND customer_id = %s;", (item_id, customer_id))
+    attributes = [row for row in cur][0]
+
+    cur.execute(
+        """
+        INSERT INTO rental_history
+        VALUES (%s, %s, %s, %s, %s);
+        """, (
+            attributes[0],
+            attributes[1],
+            attributes[2],
+            date.today(),
+            date.today()
+        )
+    )
+
+    cur.execute(
+        """
+        DELETE FROM rental
+        WHERE item_id = %s AND customer_id = %s;
+        """, (
+            item_id,
+            customer_id
+        )
+    )
 
 
 def grant_extension(item_id: str = None, customer_id: str = None):
