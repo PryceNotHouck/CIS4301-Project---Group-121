@@ -119,7 +119,77 @@ def edit_customer(original_customer_id: str = None, new_customer: Customer = Non
     original_customer_id - A string containing the customer id for the customer to be edited.
     new_customer - A Customer object containing attributes to update. If an attribute is None, it should not be altered.
     """
-    raise NotImplementedError("you must implement this function")
+
+    updates = []
+    values = []
+    if new_customer.customer_id is not None:
+        updates.append("c_customer_id = %s")
+        values.append(new_customer.customer_id)
+    if new_customer.name is not None:
+        name_space = new_customer.name.find(' ')
+        first = new_customer.name[:name_space]
+        last = new_customer.name[name_space + 1:]
+        updates.append("c_first_name = %s")
+        updates.append("c_last_name = %s")
+        values.extend([first, last])
+    if new_customer.email is not None:
+        updates.append("c_email_address = %s")
+        values.append(new_customer.email)
+    if new_customer.address is not None:
+        cur.execute(
+            """
+            SELECT ca_address_sk FROM customer_address
+            WHERE EXISTS(
+            SELECT c_current_addr_sk FROM customer
+            WHERE c_current_addr_sk = customer_address.ca_address_sk
+            );
+            """
+        )
+        ca_sk = int([row for row in cur][0][0])
+        address = new_customer.address
+
+        segment = address.find(' ')
+        street_number = address[:segment]
+        address = address[segment:]
+
+        segment = address.find(',')
+        street_name = address[:segment]
+        address = address[segment + 1:]
+
+        segment = address.find(',')
+        city = address[:segment]
+        address = address[segment + 1:]
+
+        segment = address.find(' ')
+        state = address[:segment]
+        address = address[segment:]
+        zip = address
+
+        cur.execute(
+            """
+            UPDATE customer_address
+            SET ca_street_number = %s, ca_street_name = %s, ca_city = %s, ca_state = %s, ca_zip = %s
+            WHERE ca_address_sk = %s;
+            """, (
+                street_number,
+                street_name,
+                city,
+                state,
+                zip,
+                ca_sk
+            )
+        )
+
+    full_update = ", ".join(updates)
+    values.append(original_customer_id)
+
+    query = f"""
+    UPDATE customer
+    SET {full_update}
+    WHERE c_customer_id = %s;
+    """
+
+    cur.execute(query, values)
 
 
 def rent_item(item_id: str = None, customer_id: str = None):
