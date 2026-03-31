@@ -197,7 +197,18 @@ def rent_item(item_id: str = None, customer_id: str = None):
     item_id - A string containing the Item ID for the item being rented.
     customer_id - A string containing the customer id of the customer renting the item.
     """
-    raise NotImplementedError("you must implement this function")
+
+    cur.execute(
+        """
+        INSERT INTO rental
+        VALUES (%s, %s, %s, %s);
+        """, (
+            item_id,
+            customer_id,
+            date.today(),
+            date.today() + timedelta(days = 14)
+        )
+    )
 
 
 def waitlist_customer(item_id: str = None, customer_id: str = None) -> int:
