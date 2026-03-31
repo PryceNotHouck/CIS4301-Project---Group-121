@@ -316,7 +316,107 @@ def get_filtered_items(filter_attributes: Item = None,
     """
     Returns a list of Item objects matching the filters.
     """
-    raise NotImplementedError("you must implement this function")
+
+    filters = []
+    values = []
+    if filter_attributes.item_id is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("i_item_id LIKE %s")
+        else:
+            filters.append("i_item_id = %s")
+        values.append(filter_attributes.item_id)
+    if filter_attributes.product_name is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("i_product_name LIKE %s")
+        else:
+            filters.append("i_product_name = %s")
+        values.append(filter_attributes.product_name)
+    if filter_attributes.brand is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("i_brand LIKE %s")
+        else:
+            filters.append("i_brand = %s")
+        values.append(filter_attributes.brand)
+    if filter_attributes.category is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("i_category LIKE %s")
+        else:
+            filters.append("i_category = %s")
+        values.append(filter_attributes.category)
+    if filter_attributes.manufact is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("i_manufact LIKE %s")
+        else:
+            filters.append("i_manufact = %s")
+        values.append(filter_attributes.manufact)
+    if filter_attributes.current_price != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("i_current_price LIKE %s")
+        else:
+            filters.append("i_current_price = %s")
+        values.append(filter_attributes.current_price)
+    if filter_attributes.start_year != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("i_rec_start_date LIKE %s")
+        else:
+            filters.append("i_rec_start_date = %s")
+        values.append(f"{filter_attributes.start_year}-1-1")
+    if filter_attributes.num_owned != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("i_num_owned LIKE %s")
+        else:
+            filters.append("i_num_owned = %s")
+        values.append(filter_attributes.num_owned)
+
+    if min_price != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("i_current_price >= %s")
+        values.append(min_price)
+    if max_price != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("i_current_price <= %s")
+        values.append(max_price)
+    if min_start_year != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("i_start_year >= %s")
+        values.append(min_start_year)
+    if max_start_year != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("i_start_year <= %s")
+        values.append(max_start_year)
+
+    full_filter = "".join(filters)
+    query = f"""
+        SELECT * FROM item
+        WHERE {full_filter};
+        """
+    cur.execute(query, values)
+
+    results = []
+    for row in cur:
+        results.append(Item(row[1], row[3], row[4], row[6], row[7], row[8], row[2], row[9]))
+
+    return results
 
 
 def get_filtered_customers(filter_attributes: Customer = None, use_patterns: bool = False) -> list[Customer]:
