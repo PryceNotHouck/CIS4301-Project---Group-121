@@ -260,7 +260,22 @@ def grant_extension(item_id: str = None, customer_id: str = None):
     """
     Adds 14 days to the due_date.
     """
-    raise NotImplementedError("you must implement this function")
+
+    cur.execute("SELECT due_date FROM rental WHERE item_id = %s AND customer_id = %s;", (item_id, customer_id))
+    old_date = [row for row in cur][0][0]
+    new_date = old_date + timedelta(days = 14)
+
+    cur.execute(
+        """
+        UPDATE rental
+        SET due_date = %s
+        WHERE item_id = %s AND customer_id = %s;
+        """, (
+            new_date,
+            item_id,
+            customer_id
+        )
+    )
 
 
 def get_filtered_items(filter_attributes: Item = None,
