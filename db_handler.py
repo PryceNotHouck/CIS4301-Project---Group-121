@@ -540,7 +540,63 @@ def get_filtered_rentals(filter_attributes: Rental = None,
     """
     Returns a list of Rental objects matching the filters.
     """
-    raise NotImplementedError("you must implement this function")
+
+    filters = []
+    values = []
+    if filter_attributes.item_id is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("item_id = %s")
+        values.append(filter_attributes.item_id)
+    if filter_attributes.customer_id is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("customer_id = %s")
+        values.append(filter_attributes.customer_id)
+    if filter_attributes.rental_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("rental_date = %s")
+        values.append(filter_attributes.rental_date)
+    if filter_attributes.due_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("due_date = %s")
+        values.append(filter_attributes.due_date)
+
+    if min_rental_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("rental_date >= %s")
+        values.append(min_rental_date)
+    if max_rental_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("rental_date <= %s")
+        values.append(max_rental_date)
+    if min_due_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("due_date >= %s")
+        values.append(min_due_date)
+    if max_due_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("due_date <= %s")
+        values.append(max_due_date)
+
+    full_filter = "".join(filters)
+    query = f"""
+        SELECT * FROM rental
+        WHERE {full_filter};
+        """
+    cur.execute(query, values)
+
+    results = []
+    for row in cur:
+        results.append(Rental(row[0], row[1], row[2], row[3]))
+
+    return results
 
 
 def get_filtered_rental_histories(filter_attributes: RentalHistory = None,
@@ -553,7 +609,78 @@ def get_filtered_rental_histories(filter_attributes: RentalHistory = None,
     """
     Returns a list of RentalHistory objects matching the filters.
     """
-    raise NotImplementedError("you must implement this function")
+
+    filters = []
+    values = []
+    if filter_attributes.item_id is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("item_id = %s")
+        values.append(filter_attributes.item_id)
+    if filter_attributes.customer_id is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("customer_id = %s")
+        values.append(filter_attributes.customer_id)
+    if filter_attributes.rental_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("rental_date = %s")
+        values.append(filter_attributes.rental_date)
+    if filter_attributes.due_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("due_date = %s")
+        values.append(filter_attributes.due_date)
+    if filter_attributes.return_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("return_date = %s")
+        values.append(filter_attributes.return_date)
+
+    if min_rental_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("rental_date >= %s")
+        values.append(min_rental_date)
+    if max_rental_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("rental_date <= %s")
+        values.append(max_rental_date)
+    if min_due_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("due_date >= %s")
+        values.append(min_due_date)
+    if max_due_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("due_date <= %s")
+        values.append(max_due_date)
+    if min_return_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("return_date >= %s")
+        values.append(min_return_date)
+    if max_return_date is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("return_date <= %s")
+        values.append(max_return_date)
+
+    full_filter = "".join(filters)
+    query = f"""
+            SELECT * FROM rental
+            WHERE {full_filter};
+            """
+    cur.execute(query, values)
+
+    results = []
+    for row in cur:
+        results.append(RentalHistory(row[0], row[1], row[2], row[3], row[4]))
+
+    return results
 
 
 def get_filtered_waitlist(filter_attributes: Waitlist = None,
@@ -562,7 +689,48 @@ def get_filtered_waitlist(filter_attributes: Waitlist = None,
     """
     Returns a list of Waitlist objects matching the filters.
     """
-    raise NotImplementedError("you must implement this function")
+
+    filters = []
+    values = []
+    if filter_attributes.item_id is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("item_id = %s")
+        values.append(filter_attributes.item_id)
+    if filter_attributes.customer_id is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("customer_id = %s")
+        values.append(filter_attributes.customer_id)
+    if filter_attributes.place_in_line != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("place_in_line = %s")
+        values.append(filter_attributes.place_in_line)
+
+    if min_place_in_line != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("place_in_line >= %s")
+        values.append(min_place_in_line)
+    if max_place_in_line != -1:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        filters.append("place_in_line <= %s")
+        values.append(max_place_in_line)
+
+    full_filter = "".join(filters)
+    query = f"""
+        SELECT * FROM waitlist
+        WHERE {full_filter};
+    """
+    cur.execute(query, values)
+
+    results = []
+    for row in cur:
+        results.append(Waitlist(row[0], row[1], row[2]))
+
+    return results
 
 
 def number_in_stock(item_id: str = None) -> int:
