@@ -130,9 +130,11 @@ def edit_customer(original_customer_id: str = None, new_customer: Customer = Non
         name_space = new_customer.name.find(' ')
         first = new_customer.name[:name_space]
         last = new_customer.name[name_space + 1:]
+
         updates.append("c_first_name = %s")
         updates.append("c_last_name = %s")
-        values.extend([first, last])
+        values.append(first)
+        values.append(last)
     if new_customer.email is not None:
         updates.append("c_email_address = %s")
         values.append(new_customer.email)
@@ -143,8 +145,11 @@ def edit_customer(original_customer_id: str = None, new_customer: Customer = Non
             WHERE EXISTS(
             SELECT c_current_addr_sk FROM customer
             WHERE c_current_addr_sk = customer_address.ca_address_sk
+            AND c_customer_id = %s);
             );
-            """
+            """, (
+                original_customer_id
+            )
         )
         ca_sk = int([row for row in cur][0][0])
         address = new_customer.address
@@ -423,8 +428,109 @@ def get_filtered_customers(filter_attributes: Customer = None, use_patterns: boo
     """
     Returns a list of Customer objects matching the filters.
     """
-    raise NotImplementedError("you must implement this function")
+    filters = []
+    values = []
+    if filter_attributes.customer_id is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("c_customer_id LIKE %s")
+        else:
+            filters.append("c_customer_id = %s")
+        values.append(filter_attributes.customer_id)
+    if filter_attributes.name is not None:
+        name_space = filter_attributes.name.find(' ')
+        first = filter_attributes.name[:name_space]
+        last = filter_attributes.name[name_space + 1:]
 
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("c_first_name LIKE %s")
+            filters.append(" AND ")
+            filters.append("c_last_name LIKE %s")
+        else:
+            filters.append("c_first_name = %s")
+            filters.append(" AND ")
+            filters.append("c_last_name = %s")
+        values.append(first)
+        values.append(last)
+    if filter_attributes.address is not None:
+        address = filter_attributes.address
+
+        segment = address.find(' ')
+        street_number = address[:segment]
+        address = address[segment:]
+
+        segment = address.find(',')
+        street_name = address[:segment]
+        address = address[segment + 1:]
+
+        segment = address.find(',')
+        city = address[:segment]
+        address = address[segment + 1:]
+
+        segment = address.find(' ')
+        state = address[:segment]
+        address = address[segment:]
+        zip = address
+
+        cur.execute(
+            """
+            SELECT c_current_addr_sk FROM customer
+            WHERE EXISTS(
+            SELECT ca_address_sk FROM customer_address
+            WHERE ca_address_sk = customer.c_current_addr_sk
+            AND ca_street_number = %s
+            AND ca_street_name = %s
+            AND ca_city = %s
+            AND ca_state = %s
+            AND ca_zip = %s
+            );
+            """, (
+                street_number,
+                street_name,
+                city,
+                state,
+                zip
+            )
+        )
+        c_sk = int([row for row in cur][0][0])
+
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("c_customer_sk LIKE %s")
+        else:
+            filters.append("c_customer_sk = %s")
+        values.append(c_sk)
+    if filter_attributes.email is not None:
+        if len(filters) != 0:
+            filters.append(" AND ")
+        if use_patterns:
+            filters.append("c_email_address LIKE %s")
+        else:
+            filters.append("c_email_address = %s")
+        values.append(filter_attributes.email)
+
+    full_filter = "".join(filters)
+    query = f"""
+        SELECT * FROM customer
+        WHERE {full_filter};
+        """
+    cur.execute(query, values)
+
+    results = []
+    for row in cur:
+        cur.execute("SELECT * FROM customer_address WHERE ca_address_sk = %s", (row[5],))
+        address = ""
+        for add in cur:
+            # street_number street_name, city, state zip
+            address = f"{add[1]} {add[2]}, {add[3]}, {add[4]} {add[5]}"
+
+        results.append(Customer(row[1], f"{row[2]} {row[3]}", address, row[4]))
+
+    return results
 
 def get_filtered_rentals(filter_attributes: Rental = None,
                          min_rental_date: str = None,
